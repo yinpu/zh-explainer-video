@@ -118,10 +118,6 @@
 
 连续数组状态适合沿用 `render_mode: continuous`，在各块 `begin_block(id)` 后接续对象并以 `finish()` 收束；反例使用独立对象，避免混淆原查找状态。区间边界只在比较结论成立后更新，算法下标不随视觉补间产生额外比较。上述短语是写稿候选，只有进入实际 `blocks.text` 后才能成为 `beats`；动作与观察时长按对齐结果调整，配音分组独立决定。
 
-## 分镜审阅与来源
+## 分镜审阅
 
 审阅时逐场沿“问题—图形变化—旁白—结论”走一遍，确认每个结论有依据、每个符号有来源、每个动作有对应的讲解位置，并能说明上一场留下的状态如何进入下一场。成片检查见 [质量检查](quality.md)。
-
-方法参考 [manim-composer](https://github.com/adithya-s-k/manim_skill/tree/main/skills/manim-composer)；叙事路径参考其 [narrative-patterns.md](https://github.com/adithya-s-k/manim_skill/blob/main/skills/manim-composer/references/narrative-patterns.md)，视觉选择参考其 [visual-techniques.md](https://github.com/adithya-s-k/manim_skill/blob/main/skills/manim-composer/references/visual-techniques.md)。这里按中文配音和实际时间轴调整使用条件，不将参考布局与动作时长作为固定要求。
-
-实现参考 [manimgl-best-practices](https://github.com/adithya-s-k/manim_skill/tree/main/skills/manimgl-best-practices)。本文件的说明、导数和二分查找分镜为原创；外部示例中的 ManimCE 或其他版本接口须核对后才能用于 ManimGL 1.7.2，实现遵循本项目的 `TimelineScene` 与[动画编排约定](manimgl.md)。
