@@ -54,7 +54,7 @@ python3 ~/.codex/skills/zh-explainer-video/scripts/zvideo.py resume /path/to/pro
 python3 ~/.codex/skills/zh-explainer-video/scripts/zvideo.py qa /path/to/project
 ```
 
-`assets/starter` 提供最小接口示例，`assets/derivative-example` 提供导数示例。请将示例复制到单独的项目目录后修改，正式视频应围绕主题绘制图形并展开完整讲解。
+`assets/starter` 提供最小接口示例。请将示例复制到单独的项目目录后修改，正式视频应围绕主题绘制图形并展开完整讲解。
 
 质量要求见 [质量检查](references/quality.md)。自动检查通过后，仍需查看画面并试听声音接缝。
 
@@ -66,7 +66,6 @@ agents/openai.yaml       界面配置
 scripts/                 构建、配音、对齐、渲染与测试脚本
 references/              环境、项目、动画和质量文档
 assets/starter/          最小项目示例
-assets/derivative-example/ 导数项目示例
 ```
 
 ## 验证脚本

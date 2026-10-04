@@ -4,8 +4,6 @@
 
 编写动画前，在项目根目录维护 `scenes.md`，记录视觉论证与各场到 `blocks`、`beats` 的映射，写法见 [分镜与视觉论证](storyboarding.md)。它供创作和审阅使用，不由流水线解析或自动复制到 `outputs/`；现有项目配置接口不变。
 
-`assets/derivative-example/` 保存约九分钟导数案例配置和原创 ManimGL 源码，可参考其坐标系、颜色、语义锚点、割线/切线及推导布局。它不包含权重或音频；新主题应重新设计讲稿和论证，不能仅替换标题。
-
 ```json
 {
   "schema_version": 1,
