@@ -17,7 +17,7 @@ description: 用本地 ManimGL 与固定中文音色制作或修改数学、算�
 
 1. 以本文件所在目录为 skill 根目录。运行 `python3 <skill>/scripts/zvideo.py doctor`。环境缺失或首次安装时阅读 [环境准备](references/setup.md)，在已获授权范围内运行 `setup`。只缺渲染环境时运行 `setup-render`；首次安装或环境变动后运行 `doctor --verify-render` 验证 OpenGL、中文、公式和 MP4 导出。内容生成不需要反复安装。
 2. 新项目放在当前任务的可写工作区；沿用已有项目进行修改。阅读 [项目接口](references/project.md)，确定 `project.json` 和原创 ManimGL `scene.py` 的接口。`assets/starter` 是最小接口范例，正式视频应针对概念绘制图形，不能用逐段文字卡片代替解释。
-3. 编写动画前阅读 [分镜与视觉论证](references/storyboarding.md)，在项目根目录形成 `scenes.md`，明确核心问题、受众前置知识、关键洞见和每场图形如何支持推导，再完成讲稿与 `project.json`。分镜和讲稿可相互修订；已有项目局部修改只补充相关分镜。相连的内容应有清楚的因果或问题衔接。默认不在旁白、字幕、画面角标或交付说明中添加“图中均为教学示意”“仅供演示”等泛泛声明。仅当简化会影响理解时，在相关位置简短说明具体假设，例如“这里忽略空气阻力”，不重复提醒，也不删除推导必需的条件。
+3. 编写动画前阅读 [分镜与视觉论证](references/storyboarding.md)，按受众前置知识和核心问题选择叙事路径，在项目根目录形成 `scenes.md`：写清关键洞见前后的理解变化、揭示关系的图形动作及观察位置，再完成讲稿与 `project.json`。分镜和讲稿可相互修订；已有项目局部修改只补充相关分镜。相连的内容应有清楚的因果或问题衔接。默认不在旁白、字幕、画面角标或交付说明中添加“图中均为教学示意”“仅供演示”等泛泛声明。仅当简化会影响理解时，在相关位置简短说明具体假设，例如“这里忽略空气阻力”，不重复提醒，也不删除推导必需的条件。
 4. 运行 `build <project> --stop-after audio`，先完成旁白、识别和对齐。检查实际时长，按真实时间轴修订分镜节奏；超出目标就调整讲稿，不大幅拉伸语音凑时长。
 5. 编写动画前阅读 [ManimGL 动画编排](references/manimgl.md)。根据实际时间轴完成镜头，按内容耦合和编辑需要选择逐段或连续渲染。首次采用新字体、复杂公式或未验证的动画写法时，先导出并查看代表性短样片，再批量渲染。需要跨镜头配音时可用 `narration_groups`；需要延续图形对象时可用 `render_mode: continuous`，二者独立选择，见 [项目接口](references/project.md)。运行 `build <project>`，中断用 `resume <project>`；只改画面时复用语音缓存。上述命令均通过 `python3 <skill>/scripts/zvideo.py` 调用。
 6. 运行 `qa <project>`，按 [质量检查](references/quality.md) 查看画面、时间锚点和声音接缝，交付成片及工程。明确区分自动检查、画面查看和人工试听的状态。
