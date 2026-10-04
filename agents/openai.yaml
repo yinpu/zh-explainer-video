@@ -1,0 +1,4 @@
+interface:
+  display_name: "中文原理讲解视频"
+  short_description: "用 ManimGL 本地生成五至二十分钟中文数学与计算机原理动画，固定音色并同步字幕与画面"
+  default_prompt: "使用 $zh-explainer-video 制作一部五至二十分钟的中文原理讲解视频。"

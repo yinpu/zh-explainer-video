@@ -1,0 +1,34 @@
+# Python and editor caches
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.DS_Store
+.idea/
+.vscode/
+
+# Local environments and model downloads
+.venv/
+.render-venv/
+venv/
+models/
+uv-cache/
+runtime.json
+models.json
+installed-packages.txt
+render-installed-packages.txt
+
+# Generated projects, media and temporary data
+work/
+outputs/
+render-probe/
+media/
+*.log
+
+# Local credentials
+.env
+.env.*
+!.env.example
+*.pem
+*.key

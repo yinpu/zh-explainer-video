@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "title": "从一段变化到一个位置",
+  "target_seconds": [300, 1200],
+  "scene_file": "scene.py",
+  "scene_class": "Explainer",
+  "video": {"width": 1920, "height": 1080, "fps": 30},
+  "blocks": [{
+    "id": "intro", "title": "从图形建立直觉",
+    "text": "先观察这个圆。我们让半径慢慢变化，圆的大小也跟着变化。动画把数量关系变成了可以观察的过程。正式视频需要围绕一个明确的问题，展开完整的例子、推导和总结。",
+    "beats": [{"id": "circle", "phrase": "这个圆"}, {"id": "change", "phrase": "半径慢慢变化"}]
+  }]
+}
