@@ -2,7 +2,7 @@
 
 用本地 ManimGL 与固定中文音色制作数学、算法和计算机原理讲解视频的 Codex skill。
 
-默认生成 5–20 分钟、1920×1080、30 fps 的横屏视频，采用深色背景、中文烧录字幕、无背景音乐。通过图形直觉和连续推导解释概念，保留可编辑、可续跑的完整工程。
+默认生成 5–20 分钟、1920×1080、30 fps 的横屏视频，采用深色背景、中文烧录字幕、无背景音乐。参考 3Blue1Brown 的问题驱动、图形直觉与连续推导，通过逐步揭示和图形、公式的对应解释概念，保留可编辑、可续跑的完整工程。
 
 ## 功能
 
@@ -43,7 +43,7 @@ python3 ~/.codex/skills/zh-explainer-video/scripts/zvideo.py doctor --verify-mod
 
 > 使用 $zh-explainer-video 制作一部十分钟的中文视频，面向高中生解释导数为什么表示瞬时变化率，用连续动画展示割线如何趋近切线。
 
-完整工作流与声音、字幕、画面规范见 [SKILL.md](SKILL.md)。项目接口见 [项目说明](references/project.md)，动画编排见 [ManimGL 指南](references/manimgl.md)。
+完整工作流与声音、字幕、画面规范见 [SKILL.md](SKILL.md)。编写动画前按 [分镜与视觉论证](references/storyboarding.md) 在项目根目录形成 `scenes.md`，配音完成后按实际时间轴调整节奏。项目接口见 [项目说明](references/project.md)，动画编排见 [ManimGL 指南](references/manimgl.md)。
 
 命令行入口：
 

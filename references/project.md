@@ -2,6 +2,8 @@
 
 项目有 `project.json`、`scene.py`、`work/` 缓存和 `outputs/` 交付。命令传入项目目录。`assets/starter` 为最小接口范例，需要扩展为完整内容后达到默认 300–1200 秒。
 
+编写动画前，在项目根目录维护 `scenes.md`，记录视觉论证与各场到 `blocks`、`beats` 的映射，写法见 [分镜与视觉论证](storyboarding.md)。它供创作和审阅使用，不由流水线解析或自动复制到 `outputs/`；现有项目配置接口不变。
+
 `assets/derivative-example/` 保存约九分钟导数案例配置和原创 ManimGL 源码，可参考其坐标系、颜色、语义锚点、割线/切线及推导布局。它不包含权重或音频；新主题应重新设计讲稿和论证，不能仅替换标题。
 
 ```json
@@ -42,7 +44,7 @@ class Explainer(TimelineScene):
 
 逐段模式中，每块运行同一 Scene，根据 `self.block['id']` 分派镜头。`self.job` 是完整配置，`self.timing` 是该块实际时长和锚点。`at` 等待到锚点，超出一个视频帧则报错；作者应调整动画时长。`finish` 补足剩余时间并拒绝超时。
 
-顶部放简短标题，底部约 0.7 个场景单位留字幕。公式用 `Tex`，中文用 `Text(font='PingFang SC')`。画面应让图形参与解释，避免满屏讲稿。公式变换、动态关系和镜头写法见 [动画编排](manimgl.md)。
+需要标题时可在顶部放简短提示，底部约 0.7 个场景单位留字幕，并检查最终合成效果。主体布局随当前论证调整。公式用 `Tex`，中文用 `Text(font='PingFang SC')`。画面应让图形参与解释，避免满屏讲稿。公式变换、动态关系和镜头写法见 [动画编排](manimgl.md)。
 
 ```bash
 python3 <skill>/scripts/zvideo.py build <project> --stop-after tts
