@@ -13,13 +13,11 @@ import time
 from pathlib import Path
 import render_gl
 from timing import atomic_json, digest, file_hash, make_block_timing, validate_job, write_srt
+from voice import DEFAULT_VOICE, normalize_voice, cloud_model, credential, KEY_ENV
 
 HERE = Path(__file__).resolve().parent
 DEFAULT_RUNTIME = Path.home()/'Documents/Codex/runtimes/zh-explainer-video'
-DEFAULT_VOICE = {'speaker':'Serena','language':'Chinese','temperature':.6,'seed':20261004,
-                 'instruct':'请用标准普通话，以自然清晰的女声像老师在课堂上讲解原理。语速适中，随理解难度自然调整；提出问题时带出思考，解释因果时突出逻辑，关键概念和对比处有明确重音，推导步骤之间留出理解的停顿。语调随句意自然起伏，保持同一讲解者的音色和连贯语气。'}
-MODELS = {'tts':'Qwen3-TTS-12Hz-1.7B-CustomVoice-8bit',
-          'align':'Qwen3-ForcedAligner-0.6B-8bit','asr':'Qwen3-ASR-0.6B-8bit'}
+MODELS = {'align':'Qwen3-ForcedAligner-0.6B-8bit','asr':'Qwen3-ASR-0.6B-8bit'}
 
 
 def read(path):
@@ -88,6 +86,7 @@ def doctor(runtime, verify=False, verify_render=False):
             render_details['error']=str(exc)
             render_details['log']=str(runtime/'render-probe/render.log')
     report={'render':render_details,'ready':all(checks.values()),'checks':checks,'runtime':str(runtime),'executables':config}
+    report['voice']={**cloud_model(DEFAULT_VOICE),'speaker':DEFAULT_VOICE['speaker'],'speed':DEFAULT_VOICE['speed'],'credential_present':bool(os.environ.get(KEY_ENV))}
     if diagnostics: report['diagnostics']=diagnostics
     print(json.dumps(report,ensure_ascii=False,indent=2))
     return report
@@ -132,9 +131,12 @@ def setup(runtime, python=None):
 
 
 def worker(config,mode,data,work):
+    if mode=='tts':
+        data={**data,'voice':normalize_voice(data['voice'])}
+        credential()
     request=work/f'{mode}-request.json'
     atomic_json(request,data)
-    script='join_trim.py' if mode=='join_trim' else 'audio_worker.py'
+    script='cloud_tts.py' if mode=='tts' else 'join_trim.py' if mode=='join_trim' else 'audio_worker.py'
     run([config['python'],HERE/script,mode,request],work/f'{mode}.log')
 
 
@@ -147,24 +149,24 @@ def valid_cache(audio,meta,key):
 def load_project(project):
     job=read(project/'project.json')
     validate_job(job)
-    job['voice']={**DEFAULT_VOICE,**job.get('voice',{})}
+    job['voice']=normalize_voice(job.get('voice'))
     job['video']={'width':1920,'height':1080,'fps':30,**job.get('video',{})}
     return job
 
 
 def create_tts_tasks(job,models,work,retry=None):
     tasks=[]
+    voice=normalize_voice(job['voice'])
     for block in job['blocks']:
         bid=block['id']
         attempt=(retry or {}).get(bid,0)
         if retry is not None and bid not in retry: continue
-        base_seed=(job['voice']['seed']+int(digest(bid)[:8],16)) % (2**32-1)
-        seed=(base_seed+attempt) % (2**32-1)
-        key=digest({'worker':file_hash(HERE/'audio_worker.py'),'text':block['text'],
-                    'voice':job['voice'],'model':models['tts']['revision'],'seed':seed})
+        identity=digest([file_hash(HERE/'cloud_tts.py'),file_hash(HERE/'voice.py')])
+        key=digest({'worker':identity,'text':block['text'],
+                    'voice':voice,'model':models['tts']['revision'],'attempt':attempt})
         out=work/'audio'/f'{bid}.wav'
         if not valid_cache(out,out.with_suffix('.json'),key):
-            tasks.append({'id':bid,'text':block['text'],'seed':seed,'key':key,'output':str(out)})
+            tasks.append({'id':bid,'text':block['text'],'attempt':attempt,'key':key,'output':str(out)})
     return tasks
 
 
@@ -296,6 +298,7 @@ def render(config,job,project,work,out,timeline):
 
 
 def qa(project,runtime):
+    from pace import screen
     config=runtime_info(runtime); job=load_project(project); work=project/'work'; out=project/'outputs'
     issues=[]; warnings=[]; block_reports=[]
     timeline=read(out/'timeline.json') if (out/'timeline.json').exists() else None
@@ -344,10 +347,16 @@ def qa(project,runtime):
         if abs(float(video.get('duration',duration))-duration)>1/job['video']['fps']+.005: issues.append('Video duration drift')
         if abs(float(audio.get('duration',duration))-duration)>.06: issues.append('Audio duration drift')
     else: issues.append('Final video has not been rendered')
+    pace_checks=[]
+    for block in timeline['blocks'] if timeline else []:
+        path=work/'align'/f'{block["id"]}.json'
+        if path.exists():
+            pace_checks += [{'block':block['id'],**x} for x in screen(read(path)['items'],block['offset'])]
+    if pace_checks: warnings.append('Local speech-rate changes detected; listen at the times in pace_checks. Alignment is only a screening signal.')
     report={'automated_pass':not issues,'listening_review':'pending','visual_review':'pending',
             'duration_seconds':duration,'issues':issues,'warnings':warnings,'blocks':block_reports,
             'anchor_checks':anchors,'anchor_check_limit':'Timestamp rounding checks do not verify perceptual alignment; audition key anchors.',
-            'media':media,'seam_checks':seam_checks}
+            'media':media,'seam_checks':seam_checks,'pace_checks':pace_checks}
     review_path=project/'review.json'
     if review_path.exists():
         review=read(review_path)
@@ -370,11 +379,18 @@ def qa(project,runtime):
 
 def build(project,runtime,stop_after=None):
     project=project.resolve(); job=load_project(project); config=runtime_info(runtime)
-    models=read(runtime/'models.json'); work=project/'work'; out=project/'outputs'
+    models=read(runtime/'models.json') if (runtime/'models.json').exists() else {}
+    remote=cloud_model(job['voice'])
+    models={kind:entry for kind,entry in models.items() if kind in MODELS}
+    models['tts']=remote
+    required=['tts'] if stop_after=='tts' else ['tts','asr','align']
+    if any(kind not in models for kind in required):
+        raise RuntimeError('Missing model configuration; run doctor and see references/setup.md')
+    work=project/'work'; out=project/'outputs'
     work.mkdir(parents=True,exist_ok=True); out.mkdir(parents=True,exist_ok=True)
     state_path=work/'state.json'
     state=read(state_path) if state_path.exists() else {'attempts':{}}
-    # Editing one block must not reset another block's successful retry seed.
+    # Editing one block must not reset another block's successful recording attempt.
     prior_revisions=state.setdefault('block_revisions',{})
     for block in job['blocks']:
         bid=block['id']

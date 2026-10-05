@@ -12,71 +12,6 @@ os.environ['TOKENIZERS_PARALLELISM'] = 'false'
 from timing import atomic_json, file_hash, cer
 
 
-def tts(request):
-    import mlx.core as mx
-    import numpy as np
-    import soundfile as sf
-    from mlx_audio.tts.utils import load_model
-    start = time.monotonic()
-    model = load_model(request['model'])
-    load_seconds = time.monotonic() - start
-    for task in request['tasks']:
-        print('TTS ' + task['id'], flush=True)
-        mx.random.seed(task['seed'])
-        start = time.monotonic()
-        limit=request['voice'].get('max_tokens',2048)
-        results = list(model.generate_custom_voice(
-            text=task['text'], speaker=request['voice']['speaker'], language='Chinese',
-            instruct=request['voice']['instruct'], temperature=request['voice']['temperature'],
-            top_k=50, top_p=.95, repetition_penalty=1.05,
-            max_tokens=limit, stream=False, verbose=False))
-        if len(results) != 1:
-            raise RuntimeError('Expected a single contiguous waveform per semantic block')
-        result = results[0]
-        audio = np.asarray(result.audio, dtype=np.float32).reshape(-1)
-        if result.sample_rate != 24000 or len(audio) < 2400 or not np.isfinite(audio).all():
-            raise RuntimeError('Invalid TTS waveform')
-        if result.token_count >= limit:
-            raise RuntimeError('TTS hit generation limit; shorten this semantic block')
-        if np.max(np.abs(audio)) < .001:
-            raise RuntimeError('TTS produced silence')
-        # Remove only excessive edge silence; retain a natural lead/tail.
-        windows = np.array([np.sqrt(np.mean(x*x)) for x in np.array_split(audio, max(1,len(audio)//240))])
-        active = np.flatnonzero(windows > max(.001, float(windows.max()) * .015))
-        lo = max(0, int(active[0] * len(audio)/len(windows)) - 2400)
-        hi = min(len(audio), int((active[-1]+1)*len(audio)/len(windows)) + 4800)
-        audio = audio[lo:hi]
-        out = Path(task['output'])
-        out.parent.mkdir(parents=True, exist_ok=True)
-        sf.write(out, audio, 24000, subtype='PCM_24')
-        # Pitch is only a screening statistic; Mandarin pitch varies naturally.
-        pitch = []
-        for i in range(0, len(audio)-1440, 2400):
-            frame = audio[i:i+1440].astype(float)
-            if np.sqrt(np.mean(frame*frame)) < .012:
-                continue
-            frame = (frame-frame.mean()) * np.hanning(len(frame))
-            corr = np.fft.irfft(np.abs(np.fft.rfft(frame, n=4096))**2)[:1440]
-            low, high = 48, 240
-            peak = low + np.argmax(corr[low:high])
-            if corr[peak] > .55 * max(corr[0], 1e-10):
-                pitch.append(24000 / peak)
-        metadata = {'key':task['key'], 'seed':task['seed'], 'sample_rate':24000,
-                    'samples':len(audio), 'duration':len(audio)/24000,
-                    'elapsed_seconds':time.monotonic()-start, 'model_load_seconds':load_seconds,
-                    'peak_memory_gb':float(mx.get_peak_memory())/1e9,
-                    'rms_db':20*np.log10(max(float(np.sqrt(np.mean(audio*audio))),1e-9)),
-                    'peak':float(np.max(np.abs(audio))),
-                    'clipped_fraction':float(np.mean(np.abs(audio)>=.999)),
-                    'median_f0_hz':float(np.median(pitch)) if pitch else None,
-                    'sha256':file_hash(out)}
-        atomic_json(out.with_suffix('.json'),metadata)
-        print(json.dumps({'id':task['id'],**metadata},ensure_ascii=False),flush=True)
-        del audio, result, results
-        gc.collect()
-        mx.clear_cache()
-
-
 def speech(request, mode):
     import mlx.core as mx
     from mlx_audio.stt.utils import load_model
@@ -177,11 +112,10 @@ def split(request):
 
 if __name__=='__main__':
     p=argparse.ArgumentParser()
-    p.add_argument('mode',choices=['tts','align','asr','assemble','split'])
+    p.add_argument('mode',choices=['align','asr','assemble','split'])
     p.add_argument('request')
     args=p.parse_args()
     request=json.loads(Path(args.request).read_text())
-    if args.mode=='tts': tts(request)
-    elif args.mode=='assemble': assemble(request)
+    if args.mode=='assemble': assemble(request)
     elif args.mode=='split':split(request)
     else: speech(request,args.mode)

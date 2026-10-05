@@ -1,6 +1,6 @@
 # 本地环境准备
 
-目标：Apple Silicon macOS，建议至少 16 GB 内存。安装需要网络；生成使用本地模型，不调用云端语音接口。
+目标：Apple Silicon macOS，建议至少 16 GB 内存。安装需要网络；旁白通过豆包语音 API 合成，识别和对齐使用本地模型。配音固定为刘飞 2.0、0.95 倍，凭证配置见 [固定配音](voices.md)。
 
 ```bash
 python3 <skill>/scripts/zvideo.py doctor
@@ -22,13 +22,12 @@ python3 <skill>/scripts/zvideo.py doctor --verify-render
 
 流水线入口可继续使用 `python3`。自行编写依赖第三方库的辅助脚本时，使用 `runtime.json` 对应的虚拟环境；图像抽帧检查所需的 Pillow 位于渲染环境，不假设系统 Python 与两个虚拟环境有相同依赖。
 
-`setup` 不修改系统 Python，也不自动升级系统工具。`doctor` 指出缺项。运行目录 `runtime.json` 可指定 python、render_python、manimgl、ffmpeg、ffprobe 绝对路径。
+`setup` 不修改系统 Python，也不自动升级系统工具。`doctor` 指出缺项，并在 `voice.credential_present` 中报告当前进程是否有豆包凭证；凭证缺失不表示需要重装环境。运行目录 `runtime.json` 可指定 python、render_python、manimgl、ffmpeg、ffprobe 绝对路径。
 
 FFmpeg 必须包含 `ass` 字幕滤镜；新版 Homebrew 普通 `ffmpeg` 可能不包含它。流水线优先使用 `/opt/homebrew/opt/ffmpeg-full/bin/ffmpeg`，无需覆盖系统默认 FFmpeg。用 `ffmpeg -h filter=ass` 或 `doctor` 验证。
 
 模型固定为以下 MLX 8-bit 版本，存入共享运行目录 `models/`：
 
-- `mlx-community/Qwen3-TTS-12Hz-1.7B-CustomVoice-8bit`
 - `mlx-community/Qwen3-ForcedAligner-0.6B-8bit`
 - `mlx-community/Qwen3-ASR-0.6B-8bit`
 
@@ -46,7 +45,7 @@ FFmpeg 必须包含 `ass` 字幕滤镜；新版 Homebrew 普通 `ffmpeg` 可能�
 - `No Metal device available`：沙箱无法访问 GPU，通过执行工具申请本地 GPU 所需权限后重试，不更换云端配音。
 - `doctor` 的 `python_imports` 失败时查看 `diagnostics.python_import_error`；若是 GPU 访问限制，先处理执行权限，不能据此判定需要重新安装依赖或模型。
 - 下载中断：程序最多重试三次，复用缓存；仍失败时保留文件并指出原因，不关闭 TLS 校验。
-- 内存不足：关闭并行模型任务，按 TTS → ASR → 对齐运行；长语义块在完整句子边界拆开，不静默降级声音。
+- 内存不足：关闭并行模型任务，按 ASR → 对齐依次加载本地模型；长语义块在完整句子边界拆开，不静默降级声音。
 - 对齐失败：核对 ASR 文本、字符覆盖和时间戳，不用均匀时间分配假装通过。
 
-来源：[ManimGL](https://3b1b.github.io/manim/getting_started/installation.html)、[Qwen3-TTS](https://github.com/QwenLM/Qwen3-TTS)、[Qwen3-ASR](https://github.com/QwenLM/Qwen3-ASR)、[MLX Audio](https://github.com/Blaizzy/mlx-audio)。
+来源：[ManimGL](https://3b1b.github.io/manim/getting_started/installation.html)、[Qwen3-ASR](https://github.com/QwenLM/Qwen3-ASR)、[MLX Audio](https://github.com/Blaizzy/mlx-audio)。

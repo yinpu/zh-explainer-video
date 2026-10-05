@@ -13,9 +13,9 @@ os.environ['HF_HOME']=str(root/'hf-cache')
 from huggingface_hub import HfApi, snapshot_download
 from timing import atomic_json
 
-models={'tts':'Qwen3-TTS-12Hz-1.7B-CustomVoice-8bit',
-        'align':'Qwen3-ForcedAligner-0.6B-8bit','asr':'Qwen3-ASR-0.6B-8bit'}
+models={'align':'Qwen3-ForcedAligner-0.6B-8bit','asr':'Qwen3-ASR-0.6B-8bit'}
 manifest=json.loads((root/'models.json').read_text()) if (root/'models.json').exists() else {}
+manifest={kind:entry for kind,entry in manifest.items() if kind in models}
 for kind,name in models.items():
     prior=manifest.get(kind)
     if prior and all((Path(prior['path'])/f).exists() for f in prior['sha256']):
@@ -43,3 +43,5 @@ for kind,name in models.items():
         except Exception:
             if attempt==2:raise
             time.sleep(3*(attempt+1))
+
+atomic_json(root/'models.json',manifest)

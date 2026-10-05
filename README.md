@@ -7,7 +7,7 @@
 ## 功能
 
 - 固定 ManimGL 1.7.2，使用 `TimelineScene` 按实际音频时间轴编排动画。
-- 本地 Qwen3-TTS 1.7B CustomVoice MLX 8-bit 配音，默认 Serena 普通话。
+- 配音固定为豆包语音合成 2.0、刘飞、0.95 倍语速；只需配置 `DOUBAO_API_KEY`，见 [固定配音](references/voices.md)。
 - 本地 ASR 检查漏读与重复，ForcedAligner 生成字幕和动画锚点。
 - 支持跨镜头配音 `narration_groups` 与连续画面 `render_mode: continuous`。
 - 缓存音频与中间结果，修改画面可复用配音，中断后可继续构建。
@@ -74,6 +74,7 @@ assets/starter/          最小项目示例
 
 ```bash
 python3 -B -m unittest discover -s scripts -p 'test_pipeline.py'
+python3 -B -m unittest discover -s scripts -p 'test_cloud_tts.py'
 python3 -B -m unittest discover -s scripts -p 'test_render_gl.py'
 ~/Documents/Codex/runtimes/zh-explainer-video/.venv/bin/python -B scripts/test_grouped_audio.py
 ```
